@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 80" width="360" height="80">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif&amp;display=swap');
+  </style>
+  <g transform="translate(60, 8)">
+    <g transform="scale(2.2)">
+      <rect width="24" height="5" rx="1.5" fill="#34D399"/>
+      <rect x="2" y="7" width="5" height="19" rx="1.5" fill="#E4E1D9"/>
+      <rect x="17" y="7" width="5" height="19" rx="1.5" fill="#E4E1D9"/>
+    </g>
+  </g>
+  <text x="128" y="58" font-family="'Instrument Serif', serif" font-size="52" letter-spacing="-0.5">
+    <tspan fill="#34D399">Axi</tspan><tspan fill="#E4E1D9">ora</tspan>
+  </text>
+</svg>

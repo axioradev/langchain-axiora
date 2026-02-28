@@ -1,4 +1,18 @@
-# langchain-axiora
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/logo-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="docs/logo-light.svg">
+    <img src="docs/logo-dark.svg" alt="Axiora" width="200">
+  </picture>
+</p>
+
+<h1 align="center">langchain-axiora</h1>
+
+<p align="center">
+  <a href="https://pypi.org/project/langchain-axiora/"><img src="https://img.shields.io/pypi/v/langchain-axiora" alt="PyPI"></a>
+  <a href="https://pypi.org/project/langchain-axiora/"><img src="https://img.shields.io/pypi/pyversions/langchain-axiora" alt="Python 3.10+"></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+</p>
 
 LangChain tools for Japanese financial data — EDINET filings, XBRL, and company analysis.
 
@@ -59,6 +73,7 @@ toolkit = AxioraToolkit(
         "axiora_compare_companies",
     ],
 )
+# Invalid names raise ValueError with the valid list
 ```
 
 ## Using Individual Tools
@@ -129,4 +144,6 @@ This lets the agent self-correct (e.g., search for the right code, then retry).
 
 ## Get an API Key
 
-Sign up at [axiora.dev](https://axiora.dev) to get your API key.
+Sign up at [axiora.dev](https://axiora.dev) — free, no credit card.
+
+[Docs](https://docs.axiora.dev) · [PyPI](https://pypi.org/project/langchain-axiora/)
