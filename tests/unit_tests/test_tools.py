@@ -11,7 +11,12 @@ from langchain_core.tools import ToolException
 
 from langchain_axiora import AxioraToolkit
 from langchain_axiora.api_wrapper import AxioraAPIWrapper
-from langchain_axiora.tools import GetCompanyTool, GetFinancialsTool, SearchCompaniesTool
+from langchain_axiora.tools import (
+    ALL_TOOLS,
+    GetCompanyTool,
+    GetFinancialsTool,
+    SearchCompaniesTool,
+)
 
 
 @pytest.fixture
@@ -43,6 +48,14 @@ def test_toolkit_selected_tools():
     assert len(tools) == 2
     names = {t.name for t in tools}
     assert names == {"axiora_search_companies", "axiora_get_financials"}
+
+
+def test_toolkit_invalid_selected_tools():
+    with pytest.raises(ValueError, match="Invalid tool names"):
+        AxioraToolkit(
+            api_key="ax_test_key",
+            selected_tools=["axiora_search_companies", "nonexistent_tool"],
+        )
 
 
 def test_toolkit_reads_env_var():
@@ -89,6 +102,25 @@ def test_tool_has_correct_metadata():
     assert tool.handle_tool_error is True
 
 
+def test_all_tools_have_args_schema():
+    """Every tool except GetCoverage has an args_schema."""
+    from langchain_axiora.tools import GetCoverageTool
+
+    for tool_cls in ALL_TOOLS:
+        tool = tool_cls(api_key="ax_test")
+        assert tool.name.startswith("axiora_"), f"{tool.name} missing prefix"
+        assert tool.handle_tool_error is True, f"{tool.name} missing handle_tool_error"
+        if tool_cls is not GetCoverageTool:
+            assert tool.args_schema is not None, f"{tool.name} missing args_schema"
+
+
+def test_all_tools_have_async():
+    """Every tool implements both _run and _arun."""
+    for tool_cls in ALL_TOOLS:
+        assert hasattr(tool_cls, "_run"), f"{tool_cls.__name__} missing _run"
+        assert hasattr(tool_cls, "_arun"), f"{tool_cls.__name__} missing _arun"
+
+
 # ---------------------------------------------------------------------------
 # API calls
 # ---------------------------------------------------------------------------
@@ -108,7 +140,9 @@ def _mock_sync_client(response_json: dict) -> MagicMock:
 
 def test_search_companies_calls_api(api: AxioraAPIWrapper):
     mock_client = _mock_sync_client({"data": [{"name": "Toyota"}], "meta": {"total": 1}})
-    with patch.object(type(api), "sync_client", new_callable=PropertyMock, return_value=mock_client):
+    with patch.object(
+        type(api), "sync_client", new_callable=PropertyMock, return_value=mock_client
+    ):
         tool = SearchCompaniesTool(api=api)
         result = tool._run(query="Toyota")
         assert "Toyota" in result
@@ -118,7 +152,9 @@ def test_get_company_calls_api(api: AxioraAPIWrapper):
     mock_client = _mock_sync_client(
         {"data": {"edinet_code": "E02144", "name_en": "Toyota"}, "meta": {}}
     )
-    with patch.object(type(api), "sync_client", new_callable=PropertyMock, return_value=mock_client):
+    with patch.object(
+        type(api), "sync_client", new_callable=PropertyMock, return_value=mock_client
+    ):
         tool = GetCompanyTool(api=api)
         result = tool._run(code="7203")
         assert "E02144" in result
@@ -140,10 +176,31 @@ def test_tool_raises_tool_exception_on_http_error(api: AxioraAPIWrapper):
         "Not Found", request=MagicMock(), response=mock_resp
     )
 
-    with patch.object(type(api), "sync_client", new_callable=PropertyMock, return_value=mock_client):
+    with patch.object(
+        type(api), "sync_client", new_callable=PropertyMock, return_value=mock_client
+    ):
         tool = GetCompanyTool(api=api)
         with pytest.raises(ToolException, match="404"):
             tool._run(code="INVALID")
+
+
+def test_error_hint_for_401(api: AxioraAPIWrapper):
+    mock_resp = MagicMock()
+    mock_resp.status_code = 401
+    mock_resp.json.return_value = {"detail": "Unauthorized"}
+    mock_resp.text = "Unauthorized"
+
+    mock_client = MagicMock()
+    mock_client.request.side_effect = httpx.HTTPStatusError(
+        "Unauthorized", request=MagicMock(), response=mock_resp
+    )
+
+    with patch.object(
+        type(api), "sync_client", new_callable=PropertyMock, return_value=mock_client
+    ):
+        tool = GetCompanyTool(api=api)
+        with pytest.raises(ToolException, match="AXIORA_API_KEY"):
+            tool._run(code="7203")
 
 
 # ---------------------------------------------------------------------------
@@ -161,3 +218,52 @@ def test_api_wrapper_secret_str():
     api = AxioraAPIWrapper(api_key="ax_secret_key")
     assert "ax_secret_key" not in repr(api)
     assert api.api_key.get_secret_value() == "ax_secret_key"
+
+
+# ---------------------------------------------------------------------------
+# Retriever
+# ---------------------------------------------------------------------------
+
+
+def test_retriever_init():
+    from langchain_axiora import AxioraRetriever
+
+    retriever = AxioraRetriever(api_key="ax_test")
+    assert retriever.k == 10
+    assert retriever.section is None
+
+
+def test_retriever_with_section():
+    from langchain_axiora import AxioraRetriever
+
+    retriever = AxioraRetriever(api_key="ax_test", section="risk_factors", k=5)
+    assert retriever.section == "risk_factors"
+    assert retriever.k == 5
+
+
+def test_retriever_to_documents():
+    from langchain_axiora.retriever import AxioraRetriever
+
+    result = {
+        "data": [
+            {
+                "content": "Semiconductor supply chain risks...",
+                "company_name": "Toyota",
+                "doc_id": "S100ABCD",
+                "section": "risk_factors",
+            },
+            {
+                "content": "Foreign exchange fluctuation...",
+                "company_name": "Honda",
+                "doc_id": "S100EFGH",
+                "section": "risk_factors",
+            },
+        ],
+        "meta": {"total": 2},
+    }
+    docs = AxioraRetriever._to_documents(result)
+    assert len(docs) == 2
+    assert docs[0].page_content == "Semiconductor supply chain risks..."
+    assert docs[0].metadata["company_name"] == "Toyota"
+    assert docs[0].metadata["doc_id"] == "S100ABCD"
+    assert "content" not in docs[0].metadata
