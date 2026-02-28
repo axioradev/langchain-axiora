@@ -101,6 +101,22 @@ result = await tool.ainvoke({"code": "7203"})
 | `axiora_search_companies_batch` | Bulk company lookup |
 | `axiora_get_coverage` | Data coverage statistics |
 
+## Retriever
+
+Search English translations of Japanese filings as LangChain Documents:
+
+```python
+from langchain_axiora import AxioraRetriever
+
+retriever = AxioraRetriever(api_key="ax_live_...", section="risk_factors", k=5)
+docs = retriever.invoke("semiconductor supply chain risk")
+
+for doc in docs:
+    print(doc.metadata["company_name"], doc.page_content[:100])
+```
+
+Works in any LangChain chain or RAG pipeline that accepts a retriever.
+
 ## Error Handling
 
 All tools use `handle_tool_error=True`. When the API returns an error, the agent receives a helpful message instead of crashing:
