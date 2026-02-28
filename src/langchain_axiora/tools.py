@@ -220,7 +220,7 @@ class SearchCompaniesTool(_AxioraBaseTool):
     def _run(self, query: str, sector: str | None = None, limit: int = 10) -> str:
         try:
             return _fmt(self.api.request(
-                "GET", "/companies/search", {"query": query, "sector": sector, "limit": limit}
+                "GET", "/companies/search", {"q": query, "sector": sector, "limit": limit}
             ))
         except httpx.HTTPStatusError as exc:
             return _handle_http_error(exc)
@@ -228,7 +228,7 @@ class SearchCompaniesTool(_AxioraBaseTool):
     async def _arun(self, query: str, sector: str | None = None, limit: int = 10) -> str:
         try:
             return _fmt(await self.api.arequest(
-                "GET", "/companies/search", {"query": query, "sector": sector, "limit": limit}
+                "GET", "/companies/search", {"q": query, "sector": sector, "limit": limit}
             ))
         except httpx.HTTPStatusError as exc:
             return _handle_http_error(exc)
@@ -657,7 +657,7 @@ class SearchTranslationsTool(_AxioraBaseTool):
             return _fmt(self.api.request(
                 "GET",
                 "/translations/search",
-                {"query": query, "section": section, "limit": limit},
+                {"q": query, "section": section, "limit": limit},
             ))
         except httpx.HTTPStatusError as exc:
             return _handle_http_error(exc)
@@ -667,7 +667,7 @@ class SearchTranslationsTool(_AxioraBaseTool):
             return _fmt(await self.api.arequest(
                 "GET",
                 "/translations/search",
-                {"query": query, "section": section, "limit": limit},
+                {"q": query, "section": section, "limit": limit},
             ))
         except httpx.HTTPStatusError as exc:
             return _handle_http_error(exc)
