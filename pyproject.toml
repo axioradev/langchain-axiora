@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "langchain-axiora"
-version = "0.2.0"
+version = "0.2.1"
 description = "LangChain tools for Japanese financial data — EDINET filings, XBRL, company analysis (Axiora API)"
 readme = "README.md"
 license = "MIT"
@@ -40,11 +40,11 @@ test = [
 
 [project.urls]
 Homepage = "https://axiora.dev"
-Documentation = "https://docs.axiora.dev"
+Documentation = "https://axiora.dev/docs"
 Repository = "https://github.com/axioradev/langchain-axiora"
 Issues = "https://github.com/axioradev/langchain-axiora/issues"
 Changelog = "https://github.com/axioradev/langchain-axiora/releases"
-"API Reference" = "https://docs.axiora.dev"
+"API Reference" = "https://axiora.dev/docs"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/langchain_axiora"]
@@ -68,3 +68,8 @@ warn_unused_configs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[dependency-groups]
+dev = [
+    "twine>=6.2.0",
+]

@@ -12,6 +12,7 @@
   <a href="https://pypi.org/project/langchain-axiora/"><img src="https://img.shields.io/pypi/v/langchain-axiora" alt="PyPI"></a>
   <a href="https://pypi.org/project/langchain-axiora/"><img src="https://img.shields.io/pypi/pyversions/langchain-axiora" alt="Python 3.10+"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"></a>
+  <a href="https://x.com/axioradev"><img src="https://img.shields.io/badge/@axioradev-black?logo=x&logoColor=white" alt="X (Twitter)"></a>
 </p>
 
 LangChain tools for Japanese financial data — EDINET filings, XBRL, and company analysis.
@@ -146,4 +147,4 @@ This lets the agent self-correct (e.g., search for the right code, then retry).
 
 Sign up at [axiora.dev](https://axiora.dev) — free, no credit card.
 
-[Docs](https://docs.axiora.dev) · [PyPI](https://pypi.org/project/langchain-axiora/)
+[Docs](https://axiora.dev/docs) · [PyPI](https://pypi.org/project/langchain-axiora/)
