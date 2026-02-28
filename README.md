@@ -7,6 +7,8 @@ Give your LangChain / LangGraph agents access to 4,000+ Japanese listed companie
 ## Install
 
 ```bash
+uv add langchain-axiora
+# or
 pip install langchain-axiora
 ```
 
