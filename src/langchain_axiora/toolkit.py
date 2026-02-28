@@ -5,28 +5,59 @@ from __future__ import annotations
 from langchain_core.tools import BaseTool
 from langchain_core.tools.base import BaseToolkit
 from langchain_core.utils import secret_from_env
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, model_validator
 
 from langchain_axiora.api_wrapper import AxioraAPIWrapper
 from langchain_axiora.tools import ALL_TOOLS
+
+_VALID_TOOL_NAMES: frozenset[str] = frozenset(
+    tool_cls.model_fields["name"].default for tool_cls in ALL_TOOLS
+)
 
 
 class AxioraToolkit(BaseToolkit):
     """LangChain toolkit for Japanese financial data via Axiora.
 
-    Usage::
+    Setup:
+        Install ``langchain-axiora`` and set environment variable ``AXIORA_API_KEY``.
 
-        from langchain_axiora import AxioraToolkit
+        .. code-block:: bash
 
-        toolkit = AxioraToolkit(api_key="ax_live_...")
-        tools = toolkit.get_tools()
+            pip install langchain-axiora
+            export AXIORA_API_KEY="ax_live_..."
 
-        # Pass to any LangChain agent
-        from langgraph.prebuilt import create_react_agent
-        agent = create_react_agent(model, tools)
+    Key init args:
+        api_key: str
+            Axiora API key. Reads from ``AXIORA_API_KEY`` env var if not provided.
+        selected_tools: list[str] | None
+            Optional subset of tool names to include (default: all 18).
 
-        # Use a subset of tools (18 total can be noisy for simple agents)
-        toolkit = AxioraToolkit(api_key="ax_live_...", selected_tools=["axiora_search_companies", "axiora_get_financials"])
+    Instantiate:
+        .. code-block:: python
+
+            from langchain_axiora import AxioraToolkit
+
+            toolkit = AxioraToolkit()
+            tools = toolkit.get_tools()
+
+    Use within an agent:
+        .. code-block:: python
+
+            from langchain_anthropic import ChatAnthropic
+            from langgraph.prebuilt import create_react_agent
+
+            llm = ChatAnthropic(model="claude-sonnet-4-20250514")
+            agent = create_react_agent(llm, tools)
+            result = agent.invoke(
+                {"messages": [{"role": "user", "content": "Compare Toyota and Honda"}]}
+            )
+
+    Use a subset of tools:
+        .. code-block:: python
+
+            toolkit = AxioraToolkit(
+                selected_tools=["axiora_search_companies", "axiora_get_financials"],
+            )
     """
 
     api_key: SecretStr = Field(
@@ -50,10 +81,22 @@ class AxioraToolkit(BaseToolkit):
 
     model_config = {"populate_by_name": True}
 
+    @model_validator(mode="after")
+    def _validate_selected_tools(self) -> "AxioraToolkit":
+        if self.selected_tools is not None:
+            invalid = set(self.selected_tools) - _VALID_TOOL_NAMES
+            if invalid:
+                raise ValueError(
+                    f"Invalid tool names: {sorted(invalid)}. "
+                    f"Valid names: {sorted(_VALID_TOOL_NAMES)}"
+                )
+        return self
+
     def get_tools(self) -> list[BaseTool]:
         """Return Axiora tools configured with the shared API wrapper."""
         api = AxioraAPIWrapper(api_key=self.api_key, base_url=self.base_url)
         all_tools = [tool_cls(api=api) for tool_cls in ALL_TOOLS]
         if self.selected_tools is not None:
-            return [t for t in all_tools if t.name in self.selected_tools]
+            selected = set(self.selected_tools)
+            return [t for t in all_tools if t.name in selected]
         return all_tools
